@@ -1,0 +1,7 @@
+.DS_Store
+*.swp
+*.swo
+*~
+.cortex/
+SESSION_CONTEXT.md
+node_modules/
