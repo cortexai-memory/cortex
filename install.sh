@@ -5,7 +5,7 @@
 set -euo pipefail
 
 CORTEX_HOME="${CORTEX_HOME:-$HOME/.cortex}"
-CORTEX_REPO="cortex-memory/cortex"
+CORTEX_REPO="cortexai-memory/cortex"
 
 # ─── Banner ───────────────────────────────────────────────────────────
 
