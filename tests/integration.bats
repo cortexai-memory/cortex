@@ -57,8 +57,8 @@ teardown() {
   local PROJ2=$(mktemp -d)
 
   # Init both projects
-  cd "$PROJ1" && git init && echo "proj1" > file.txt && git add . && git commit -m "proj1 init"
-  cd "$PROJ2" && git init && echo "proj2" > file.txt && git add . && git commit -m "proj2 init"
+  cd "$PROJ1" && git init && git config user.email "test@cortex.dev" && git config user.name "Test" && echo "proj1" > file.txt && git add . && git commit -m "proj1 init"
+  cd "$PROJ2" && git init && git config user.email "test@cortex.dev" && git config user.name "Test" && echo "proj2" > file.txt && git add . && git commit -m "proj2 init"
 
   # Register both
   mkdir -p "$PROJ1/.cortex" "$PROJ2/.cortex"
