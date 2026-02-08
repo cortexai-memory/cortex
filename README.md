@@ -29,7 +29,8 @@ Cortex watches your git commits and auto-generates a `SESSION_CONTEXT.md` that y
 git commit → hook captures metadata → cx generates context → AI reads it
 ```
 
-**No daemons. No databases. No LLMs required. Just bash + git + jq.**
+**Layer 0 (bash):** No daemons. No databases. No LLMs required. Just bash + git + jq.
+**Layer 1 (Python MCP):** Semantic search over commits using local embeddings. Claude Code integration.
 
 ## Install
 
@@ -47,6 +48,48 @@ source ~/.zshrc
 ```
 
 **Requirements:** git, jq (both pre-installed on macOS)
+
+### MCP Server (Optional - for Claude Code)
+
+Cortex includes a Model Context Protocol (MCP) server for Claude Code with semantic search:
+
+```bash
+# Install Python dependencies
+cd cortex
+uv sync
+
+# Install Ollama and embedding model
+brew install ollama
+ollama pull nomic-embed-text
+
+# Register MCP server with Claude Code
+# (Creates .mcp.json pointing to cortex-memory server)
+```
+
+**MCP Tools Available:**
+- `cortex_context` - Live session context (equivalent to SESSION_CONTEXT.md)
+- `cortex_search` - **Semantic search** over commits (natural language queries!)
+- `cortex_diff` - Compare commits with detailed diffs
+- `cortex_index` - Index commits for vector search
+- `cortex_status` - Memory stats and configuration
+- `cortex_file_history` - Git history for specific files
+
+**Example searches:**
+- "authentication bugs" → finds auth-related commits by meaning, not keywords
+- "recent refactorings" → semantic understanding of refactor commits
+- "database schema changes" → finds relevant migrations
+
+**Quick Start (MCP Server):**
+```bash
+# 1. Open Claude Code in your project
+# 2. Use the cortex_index tool to index commits
+cortex_index(project_dir="/path/to/your/project")
+
+# 3. Search semantically
+cortex_search(query="authentication bugs")
+cortex_search(query="database migrations", file_type="sql")
+cortex_search(query="recent refactoring", since="2024-01-01")
+```
 
 ## Usage
 
@@ -182,26 +225,42 @@ Your AI assistant reads this automatically. No copy-pasting. No re-explaining.
 
 ## How It Works
 
-Three components. ~400 lines of bash. Zero external dependencies.
+**Two-layer architecture:**
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    HOW CORTEX WORKS                      │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  1. GIT HOOK (post-commit)                              │
-│     Captures commit metadata to .cortex/commits.jsonl   │
-│     Runs in <10ms. Never blocks git.                    │
-│                                                         │
-│  2. CONTEXT GENERATOR (cortex-context.sh)               │
-│     Reads git data → writes SESSION_CONTEXT.md          │
-│     Runs in <100ms. ~500 tokens of context.             │
-│                                                         │
-│  3. SESSION MANAGER (cx command)                        │
-│     Generate context → launch Claude → log session      │
-│     Auto-initializes on first run per project.          │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                      HOW CORTEX WORKS                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  LAYER 0 (Bash) — Core Memory                                   │
+│  ─────────────────────────────────                              │
+│  1. GIT HOOK (post-commit)                                      │
+│     Captures commit metadata to .cortex/commits.jsonl           │
+│     Runs in <10ms. Never blocks git.                            │
+│                                                                 │
+│  2. CONTEXT GENERATOR (cortex-context.sh)                       │
+│     Reads git data → writes SESSION_CONTEXT.md                  │
+│     Runs in <100ms. ~500 tokens of context.                     │
+│                                                                 │
+│  3. SESSION MANAGER (cx command)                                │
+│     Generate context → launch Claude → log session              │
+│     Auto-initializes on first run per project.                  │
+│                                                                 │
+│  LAYER 1 (Python MCP) — Intelligence [Optional]                 │
+│  ───────────────────────────────────────────                    │
+│  4. EMBEDDING GENERATOR (cortex-memory)                         │
+│     Reads commits.jsonl → generates 768-dim vectors             │
+│     Uses Ollama (nomic-embed-text) — runs locally               │
+│                                                                 │
+│  5. VECTOR STORE (LanceDB)                                      │
+│     Stores embeddings in .cortex/vectors/                       │
+│     Enables semantic similarity search                          │
+│                                                                 │
+│  6. MCP SERVER (cortex_search, cortex_index, etc.)              │
+│     Exposes tools to Claude Code via MCP protocol               │
+│     Natural language search: "auth bugs" finds relevant commits │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### Storage
@@ -212,11 +271,15 @@ All data lives in `.cortex/` (auto-added to `.gitignore`):
 .cortex/
 ├── commits.jsonl       # Commit metadata (one JSON line per commit)
 ├── sessions.jsonl      # Session start/end timestamps
-└── summaries/          # Optional LLM-generated summaries
-    └── latest.md
+├── summaries/          # Optional LLM-generated summaries
+│   └── latest.md
+└── vectors/            # Vector embeddings (Layer 1 only)
+    └── commits.lance   # LanceDB storage for semantic search
 ```
 
 ## Configuration
+
+### Layer 0 (Bash)
 
 Edit `~/.cortex/config`:
 
@@ -236,6 +299,28 @@ Enable LLM enrichment for AI-powered commit summaries:
 ```bash
 export CORTEX_ENRICH=1
 ```
+
+### Layer 1 (Python MCP)
+
+MCP server configuration is in `.mcp.json` (auto-created during setup):
+
+```json
+{
+  "mcpServers": {
+    "cortex-memory": {
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/cortex", "cortex-memory"]
+    }
+  }
+}
+```
+
+**Python dependencies:** Managed by `uv` (see `pyproject.toml`)
+- `mcp[cli]>=1.0.0` - MCP protocol server
+- `pydantic>=2.0.0` - Data validation
+- `lancedb>=0.6.0` - Vector database (optional, for semantic search)
+- `ollama>=0.1.0` - Local embeddings (optional, for semantic search)
+- `numpy>=1.24.0` - Vector operations (optional, for semantic search)
 
 ## Works With
 
@@ -286,13 +371,26 @@ Health: GOOD (9/9 required checks passed)
 No. The post-commit hook runs in <10ms and never blocks. It uses `exit 0` to ensure git is never affected.
 
 **Does it need Ollama/LLMs?**
-No. LLM enrichment is 100% optional. Core functionality works with just git + jq.
+No. Layer 0 (bash) works with just git + jq. Layer 1 (MCP server with semantic search) is optional and requires Ollama for embeddings.
+
+**Do I need the MCP server?**
+No. The MCP server (Layer 1) is optional. Layer 0 provides full functionality via SESSION_CONTEXT.md. Layer 1 adds semantic search and Claude Code integration.
+
+**What's the difference between Layer 0 and Layer 1?**
+- **Layer 0 (bash):** Captures commits → generates SESSION_CONTEXT.md. No Python, no dependencies, always works.
+- **Layer 1 (Python MCP):** Semantic search over commits, natural language queries, Claude Code integration. Optional.
 
 **Does it work in CI/CD?**
 Yes. The hook auto-detects CI environments (GitHub Actions, GitLab CI, Jenkins, Buildkite, CircleCI, Travis) and skips itself.
 
 **Does it work with teams?**
 Yes. `.cortex/` is local-only (auto-added to .gitignore). Each developer has their own memory. No merge conflicts.
+
+**How much disk space do vector embeddings use?**
+Approximately 3KB per commit. 1000 commits ≈ 3MB. LanceDB storage is efficient and local.
+
+**Can I use semantic search without Ollama?**
+Not yet. Currently requires local Ollama for embeddings. Cloud embedding providers (OpenAI, Cohere) planned for future releases.
 
 **How do I uninstall?**
 ```bash
