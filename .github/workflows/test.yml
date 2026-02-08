@@ -38,8 +38,13 @@ jobs:
         run: shellcheck --severity=warning bin/*.sh templates/*.sh install.sh uninstall.sh
 
       - name: Run tests
-        timeout-minutes: 10
-        run: unset CI GITHUB_ACTIONS && bats tests/
+        timeout-minutes: 6
+        run: |
+          unset CI GITHUB_ACTIONS
+          bats tests/
+          # Cleanup any stray background processes
+          pkill -f cortex-daemon || true
+          pkill -f cortex-watch || true
 
   test-python:
     strategy:
