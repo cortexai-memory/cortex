@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # --- cortex-hook-v1 ---
 # Cortex post-commit hook — captures commit metadata to .cortex/commits.jsonl
 # Auto-installed by cx (cortex-session.sh). Safe to run alongside other hooks.
