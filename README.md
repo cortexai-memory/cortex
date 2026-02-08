@@ -72,6 +72,22 @@ Shows:
 - Health status
 - JSON output available with `--json` flag
 
+### File Watching (Optional)
+
+```bash
+cortex-watch.sh [--daemon]    # Monitor file changes in real-time
+```
+
+Automatically tracks file system events (create, modify, delete) to `.cortex/events.jsonl`. Requires `fswatch` (macOS) or `inotify-tools` (Linux).
+
+### Progress Tracking
+
+Cortex auto-generates `PROGRESS.md` showing:
+- ✅ What's been done (last 7 days)
+- 🔨 What's in progress (feature branches)
+- ⏳ What's next (from PROJECT_STATE.md)
+- 📊 Velocity metrics (commits/day, lines added)
+
 ## What Your AI Sees
 
 When you run `cx`, Cortex generates `SESSION_CONTEXT.md`:
