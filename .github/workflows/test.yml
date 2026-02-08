@@ -38,10 +38,7 @@ jobs:
         run: shellcheck --severity=warning bin/*.sh templates/*.sh install.sh uninstall.sh
 
       - name: Run tests
-        env:
-          CI: ''
-          GITHUB_ACTIONS: ''
-        run: bats tests/
+        run: unset CI GITHUB_ACTIONS && bats tests/
 
   lint:
     runs-on: ubuntu-latest
