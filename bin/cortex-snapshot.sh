@@ -216,8 +216,12 @@ cmd_restore() {
   fi
 
   _cortex_log warn "This will apply the snapshot diff. Current changes may be overwritten."
-  read -p "Continue? [y/N] " -n 1 -r
-  echo
+  if [[ -t 0 ]]; then
+    read -p "Continue? [y/N] " -n 1 -r
+    echo
+  else
+    REPLY="n"
+  fi
 
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     echo "Aborted"
@@ -286,7 +290,11 @@ cmd_undo() {
   local snapshot_id
   snapshot_id=$(basename "$target" .snapshot)
 
-  read -r -p "Remove latest snapshot ($snapshot_id)? [y/N] " response
+  if [[ -t 0 ]]; then
+    read -r -p "Remove latest snapshot ($snapshot_id)? [y/N] " response
+  else
+    response="n"
+  fi
   case "$response" in
     [yY][eE][sS]|[yY])
       # Remove snapshot files

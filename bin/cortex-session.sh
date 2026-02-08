@@ -106,7 +106,11 @@ if [[ -f "$LATEST_SNAPSHOT" ]]; then
       echo ""
 
       # Prompt user
-      read -r -p "Continue from previous session? [y/N] " response
+      if [[ -t 0 ]]; then
+        read -r -p "Continue from previous session? [y/N] " response
+      else
+        response="n"
+      fi
       case "$response" in
         [yY][eE][sS]|[yY])
           _cortex_log info "Restoring snapshot..."
