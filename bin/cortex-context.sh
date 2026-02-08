@@ -148,7 +148,6 @@ FOCUS_AREAS=""
 
 if _cortex_is_git_repo "$PROJECT_DIR" && cd "$PROJECT_DIR" && git rev-parse HEAD >/dev/null 2>&1; then
   # Find most frequently changed files in last 7 days
-  local hot_files_list
   hot_files_list=$(cd "$PROJECT_DIR" && \
     git log --since='7 days ago' --name-only --format='' 2>/dev/null | \
     grep -v '^$' | \
@@ -163,7 +162,6 @@ $hot_files_list
   fi
 
   # Identify file types being worked on
-  local file_types
   file_types=$(cd "$PROJECT_DIR" && \
     git log --since='7 days ago' --name-only --format='' 2>/dev/null | \
     grep -v '^$' | \
