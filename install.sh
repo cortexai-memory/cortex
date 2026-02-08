@@ -98,11 +98,13 @@ fi
 echo ""
 echo "Installing to $CORTEX_HOME..."
 
-mkdir -p "$CORTEX_HOME"/{bin,templates}
+mkdir -p "$CORTEX_HOME"/{bin,templates,completions}
 
 # Copy scripts
 cp "$SCRIPT_DIR/bin/"*.sh "$CORTEX_HOME/bin/" 2>/dev/null || true
 cp "$SCRIPT_DIR/templates/"*.sh "$CORTEX_HOME/templates/" 2>/dev/null || true
+cp -r "$SCRIPT_DIR/templates/"* "$CORTEX_HOME/templates/" 2>/dev/null || true
+cp "$SCRIPT_DIR/completions/"* "$CORTEX_HOME/completions/" 2>/dev/null || true
 
 # Set permissions
 chmod +x "$CORTEX_HOME/bin/"*.sh 2>/dev/null || true
@@ -185,6 +187,24 @@ else
       echo "export CORTEX_ENRICH=0  # Set to 1 to enable LLM enrichment"
     } >> "$SHELL_RC"
     ALIAS_INSTALLED=1
+  fi
+
+  # Add completion sourcing
+  if [[ "$SHELL_RC" == *zsh* ]]; then
+    if ! grep -q 'cortex.zsh' "$SHELL_RC" 2>/dev/null; then
+      {
+        echo "# Cortex tab completion"
+        echo "[ -f \"\$HOME/.cortex/completions/cortex.zsh\" ] && source \"\$HOME/.cortex/completions/cortex.zsh\""
+      } >> "$SHELL_RC"
+    fi
+  else
+    # Bash
+    if ! grep -q 'cortex.bash' "$SHELL_RC" 2>/dev/null; then
+      {
+        echo "# Cortex tab completion"
+        echo "[ -f \"\$HOME/.cortex/completions/cortex.bash\" ] && source \"\$HOME/.cortex/completions/cortex.bash\""
+      } >> "$SHELL_RC"
+    fi
   fi
 fi
 
