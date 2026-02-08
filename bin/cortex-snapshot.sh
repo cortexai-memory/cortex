@@ -297,7 +297,7 @@ cmd_undo() {
 
       # Find previous snapshot and make it latest
       local prev_snapshot
-      prev_snapshot=$(ls -t "$SNAPSHOTS_DIR"/*.snapshot 2>/dev/null | grep -v "latest.snapshot" | head -1)
+      prev_snapshot=$(find "$SNAPSHOTS_DIR" -maxdepth 1 -name '*.snapshot' ! -name 'latest.snapshot' -print 2>/dev/null | sort -r | head -1)
 
       if [[ -n "$prev_snapshot" ]]; then
         ln -sf "$(basename "$prev_snapshot")" "$SNAPSHOTS_DIR/latest.snapshot"

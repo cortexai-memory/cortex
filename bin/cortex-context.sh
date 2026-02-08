@@ -58,8 +58,6 @@ if [[ -f "$LATEST_SNAPSHOT" ]]; then
 
   if [[ -n "$SNAPSHOT_TS" ]] && [[ "$SNAPSHOT_FILES" -gt 0 ]]; then
     # Calculate time ago (simple version)
-    TIME_AGO="some time ago"
-
     UNCOMMITTED_SECTION="
 ## PREVIOUS SESSION (uncommitted work)
 

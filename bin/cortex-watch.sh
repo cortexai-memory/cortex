@@ -102,10 +102,11 @@ log_event() {
   local file_path="$2"
 
   # Normalize path (relative to project)
-  local rel_path="${file_path#$PROJECT_DIR/}"
+  local rel_path="${file_path#"$PROJECT_DIR"/}"
 
-  # Skip if file matches exclusion patterns
+  # Skip if file matches exclusion patterns (glob matching intentional)
   for pattern in "${EXCLUDE_FILES[@]}"; do
+    # shellcheck disable=SC2053
     if [[ "$rel_path" == $pattern ]]; then
       return 0
     fi

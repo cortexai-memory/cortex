@@ -286,7 +286,7 @@ cleanup() {
 
   # Check for uncommitted work and create snapshot
   if _cortex_is_git_repo "$PROJECT_DIR"; then
-    cd "$PROJECT_DIR"
+    cd "$PROJECT_DIR" || return
     local uncommitted
     uncommitted=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
 
