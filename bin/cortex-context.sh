@@ -141,6 +141,42 @@ if _cortex_is_git_repo "$PROJECT_DIR"; then
   UNCOMMITTED=$(cd "$PROJECT_DIR" && git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
 fi
 
+# ─── Smart Context Prioritization (B2.2) ─────────────────────────────
+
+HOT_FILES=""
+FOCUS_AREAS=""
+
+if _cortex_is_git_repo "$PROJECT_DIR" && cd "$PROJECT_DIR" && git rev-parse HEAD >/dev/null 2>&1; then
+  # Find most frequently changed files in last 7 days
+  local hot_files_list
+  hot_files_list=$(cd "$PROJECT_DIR" && \
+    git log --since='7 days ago' --name-only --format='' 2>/dev/null | \
+    grep -v '^$' | \
+    sort | uniq -c | sort -rn | head -5 | \
+    awk '{print $2" ("$1" changes)"}' || true)
+
+  if [[ -n "$hot_files_list" ]]; then
+    HOT_FILES="
+## FOCUS AREAS (most active files, last 7 days)
+$hot_files_list
+"
+  fi
+
+  # Identify file types being worked on
+  local file_types
+  file_types=$(cd "$PROJECT_DIR" && \
+    git log --since='7 days ago' --name-only --format='' 2>/dev/null | \
+    grep -v '^$' | \
+    sed 's/.*\.//' | \
+    sort | uniq -c | sort -rn | head -3 | \
+    awk '{print $2" ("$1" files)"}' | \
+    tr '\n' ', ' | sed 's/,$//' || true)
+
+  if [[ -n "$file_types" ]]; then
+    FOCUS_AREAS="File types: $file_types"
+  fi
+fi
+
 # ─── Warnings ─────────────────────────────────────────────────────────
 
 WARNINGS=""
@@ -173,6 +209,32 @@ if _cortex_is_git_repo "$PROJECT_DIR" && cd "$PROJECT_DIR" && git rev-parse HEAD
 fi
 
 [[ -z "$WARNINGS" ]] && WARNINGS="None."
+
+# ─── Session Notes (B6.2) ────────────────────────────────────────────
+
+NOTES_SECTION=""
+NOTES_FILE="$CORTEX_DIR/notes.jsonl"
+
+if [[ -f "$NOTES_FILE" ]] && [[ -s "$NOTES_FILE" ]]; then
+  # Read last 5 notes
+  NOTES_LIST=$(tail -5 "$NOTES_FILE" | while IFS= read -r line; do
+    if command -v jq >/dev/null 2>&1; then
+      local note
+      note=$(echo "$line" | jq -r '.note // ""' 2>/dev/null || echo "")
+      if [[ -n "$note" ]]; then
+        echo "- $note"
+      fi
+    fi
+  done)
+
+  if [[ -n "$NOTES_LIST" ]]; then
+    NOTES_SECTION="
+
+## SESSION NOTES (last 5)
+$NOTES_LIST
+"
+  fi
+fi
 
 # ─── LLM Enrichment (optional) ───────────────────────────────────────
 
@@ -218,10 +280,11 @@ $TASK
 ## GIT STATUS
 Branch: $BRANCH | Uncommitted: $UNCOMMITTED files
 Last: $LAST_COMMIT
-
+${FOCUS_AREAS}
+${HOT_FILES}
 ## WARNINGS
 $(printf '%b' "$WARNINGS")
-${ENRICHMENT}${DECISIONS}
+${NOTES_SECTION}${ENRICHMENT}${DECISIONS}
 CTXEOF
 
 mv "$OUTPUT_TMP" "$OUTPUT"

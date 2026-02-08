@@ -5,6 +5,68 @@ All notable changes to Cortex will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-02-08
+
+### Added - B3: Snapshot Enhancements
+- **Auto-restore prompt** on `cx` start
+  - Detects uncommitted snapshot from previous session
+  - Prompts user to continue or start fresh
+  - Auto-cleans snapshot after restore
+- **Snapshot diff command** (`cortex-snapshot.sh diff [id]`)
+  - View diff with syntax highlighting (bat/colordiff)
+  - Default to latest snapshot
+- **Snapshot branch command** (`cortex-snapshot.sh branch <id> <name>`)
+  - Create new git branch from snapshot
+  - Auto-applies snapshot diff to new branch
+  - Helpful next-step messages
+- **Snapshot search command** (`cortex-snapshot.sh search <keyword>`)
+  - Search across snapshot metadata, diffs, and file lists
+  - Shows context around matches
+  - Case-insensitive search
+- **Snapshot undo command** (`cortex-snapshot.sh undo`)
+  - Remove latest snapshot
+  - Auto-revert to previous snapshot
+
+### Added - B6: Quality of Life Improvements
+- **cx-commit command** — Quick commit helper
+  - Commits + enriches + updates context in one command
+  - Usage: `cx-commit "commit message" [files...]`
+  - Shows staged changes before commit
+  - Confirmation prompt
+- **cx-note command** — Session notes for AI context
+  - Commands: add, list, show, clear, export
+  - Notes stored in `.cortex/notes.jsonl`
+  - Included in SESSION_CONTEXT.md (last 5 notes)
+  - Export to SESSION_NOTES.md
+- **cortex-preview.sh** — Preview context without launching Claude
+  - Generates SESSION_CONTEXT.md
+  - Displays with syntax highlighting (bat/glow)
+  - Shows statistics (words, tokens, lines)
+
+### Added - B2: Better LLM Integration
+- **AI session summary on exit**
+  - Auto-generates when CORTEX_ENRICH=1
+  - Shows duration, commits, files changed, notes
+  - Saved to `.cortex/summaries/sessions/{id}.md`
+  - Displayed in terminal on cx exit
+- **Smart context prioritization**
+  - Identifies most actively worked-on files (last 7 days)
+  - Shows file change frequency
+  - Displays active file types
+  - New "FOCUS AREAS" section in SESSION_CONTEXT.md
+
+### Changed
+- Installer now adds `cx-commit` and `cx-note` aliases
+- SESSION_CONTEXT.md includes session notes and focus areas
+- Snapshot manager supports 9 commands (was 5)
+
+### Benefits
+- ✅ Faster workflow with cx-commit (no multi-step commits)
+- ✅ Better context with session notes
+- ✅ Easier snapshot exploration (diff, branch, search)
+- ✅ AI gets smarter context (prioritization, summaries)
+- ✅ Preview context before launching Claude
+
 ## [1.7.0] - 2026-02-08
 
 ### Added

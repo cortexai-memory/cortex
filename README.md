@@ -115,6 +115,41 @@ cortex-snapshot.sh clear 7      # Remove snapshots older than 7 days
 - You can continue working OR commit
 - No more re-explaining what you did!
 
+### Enhanced Workflow (NEW in v1.8.0)
+
+**Quick Commit:**
+```bash
+cx-commit "feat: add login page"          # Commit + enrich + update context
+cx-commit "fix: auth bug" src/auth.js     # Commit specific files
+```
+
+**Session Notes:**
+```bash
+cx-note add "Remember to test edge cases"  # Add note
+cx-note list                               # View all notes
+cx-note export                             # Export to SESSION_NOTES.md
+```
+
+**Snapshot Power Tools:**
+```bash
+cortex-snapshot.sh diff latest              # View snapshot diff
+cortex-snapshot.sh search "authentication"   # Search snapshots
+cortex-snapshot.sh branch latest new-feature # Create branch from snapshot
+cortex-snapshot.sh undo                     # Remove latest snapshot
+```
+
+**Preview Context:**
+```bash
+cortex-preview.sh  # See what Claude will receive (without launching)
+```
+
+### Smart Features (v1.8.0)
+
+- **Auto-restore**: Prompts you to continue from previous session on `cx` start
+- **Session summaries**: AI summary of what you accomplished (when CORTEX_ENRICH=1)
+- **Context prioritization**: Cortex highlights most-changed files automatically
+- **Focus areas**: Shows which file types you're actively working on
+
 ## What Your AI Sees
 
 When you run `cx`, Cortex generates `SESSION_CONTEXT.md`:

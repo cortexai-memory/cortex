@@ -84,6 +84,57 @@ EOF
   _cortex_log info "Initialized in $PROJECT_NAME."
 fi
 
+# ─── Auto-Restore Prompt (B3.1) ───────────────────────────────────────
+
+# Check for uncommitted snapshot from previous session
+SNAPSHOTS_DIR="$CORTEX_DIR/snapshots"
+LATEST_SNAPSHOT="$SNAPSHOTS_DIR/latest.snapshot"
+
+if [[ -f "$LATEST_SNAPSHOT" ]]; then
+  # Read snapshot metadata
+  if command -v jq >/dev/null 2>&1; then
+    SNAPSHOT_FILES=$(jq -r '.uncommitted_files // 0' "$LATEST_SNAPSHOT" 2>/dev/null || echo "0")
+    SNAPSHOT_TS=$(jq -r '.timestamp // ""' "$LATEST_SNAPSHOT" 2>/dev/null || echo "")
+    SNAPSHOT_ID=$(jq -r '.session_id // "unknown"' "$LATEST_SNAPSHOT" 2>/dev/null || echo "unknown")
+
+    if [[ "$SNAPSHOT_FILES" -gt 0 ]]; then
+      echo ""
+      echo "📦 Previous session snapshot detected"
+      echo "   Session: $SNAPSHOT_ID"
+      echo "   Files: $SNAPSHOT_FILES uncommitted"
+      echo "   Time: $SNAPSHOT_TS"
+      echo ""
+
+      # Prompt user
+      read -r -p "Continue from previous session? [y/N] " response
+      case "$response" in
+        [yY][eE][sS]|[yY])
+          _cortex_log info "Restoring snapshot..."
+          SNAPSHOT_SCRIPT="$SCRIPT_DIR/cortex-snapshot.sh"
+          [[ ! -f "$SNAPSHOT_SCRIPT" ]] && SNAPSHOT_SCRIPT="$CORTEX_HOME/bin/cortex-snapshot.sh"
+
+          if [[ -f "$SNAPSHOT_SCRIPT" ]]; then
+            "$SNAPSHOT_SCRIPT" restore "$SNAPSHOT_ID" 2>/dev/null || {
+              _cortex_log warn "Snapshot restore failed. Continuing with current state."
+            }
+          else
+            _cortex_log warn "cortex-snapshot.sh not found. Continuing with current state."
+          fi
+
+          # Clear the snapshot after restore so we don't prompt again
+          rm -f "$LATEST_SNAPSHOT" 2>/dev/null || true
+          _cortex_log info "Snapshot restored. Previous work is now in your working directory."
+          echo ""
+          ;;
+        *)
+          _cortex_log info "Starting fresh session (snapshot preserved)"
+          echo ""
+          ;;
+      esac
+    fi
+  fi
+fi
+
 # ─── Generate Fresh Context ──────────────────────────────────────────
 
 CONTEXT_SCRIPT="$SCRIPT_DIR/cortex-context.sh"
@@ -96,6 +147,99 @@ if [[ -f "$CONTEXT_SCRIPT" ]]; then
 else
   _cortex_log warn "cortex-context.sh not found. Launching without context."
 fi
+
+# ─── Session Summary Generator (B2.1) ────────────────────────────────
+
+generate_session_summary() {
+  # Generate AI summary of what was accomplished in this session
+
+  if ! command -v jq >/dev/null 2>&1; then
+    return 0  # Skip if jq not available
+  fi
+
+  # Calculate session duration
+  local duration_sec=0
+  if [[ -n "${START_TS:-}" ]]; then
+    local now_epoch
+    now_epoch=$(date +%s)
+    local start_epoch
+    if date -j -f "%Y-%m-%dT%H:%M:%SZ" "$START_TS" +%s >/dev/null 2>&1; then
+      # macOS
+      start_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$START_TS" +%s 2>/dev/null || echo "$now_epoch")
+    else
+      # Linux
+      start_epoch=$(date -d "$START_TS" +%s 2>/dev/null || echo "$now_epoch")
+    fi
+    duration_sec=$((now_epoch - start_epoch))
+  fi
+
+  local duration_min=$((duration_sec / 60))
+
+  # Gather session data
+  local commits_made=""
+  if _cortex_is_git_repo "$PROJECT_DIR" && cd "$PROJECT_DIR"; then
+    commits_made=$(git log --oneline --since="$START_TS" 2>/dev/null | head -10)
+  fi
+
+  local files_changed=""
+  if _cortex_is_git_repo "$PROJECT_DIR" && cd "$PROJECT_DIR"; then
+    files_changed=$(git diff --name-only "$START_TS" 2>/dev/null | head -20 | tr '\n' ',' | sed 's/,$//')
+  fi
+
+  local notes_taken=""
+  if [[ -f "$CORTEX_DIR/notes.jsonl" ]]; then
+    notes_taken=$(tail -5 "$CORTEX_DIR/notes.jsonl" | jq -r '.note // ""' 2>/dev/null | tr '\n' ' ' || true)
+  fi
+
+  # Create summary
+  echo ""
+  echo "📊 Session Summary"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "   Duration: ${duration_min} minutes"
+
+  if [[ -n "$commits_made" ]]; then
+    local commit_count
+    commit_count=$(echo "$commits_made" | wc -l | tr -d ' ')
+    echo "   Commits: $commit_count"
+    echo "$commits_made" | sed 's/^/      /'
+  else
+    echo "   Commits: 0"
+  fi
+
+  if [[ -n "$notes_taken" ]]; then
+    echo "   Notes: Yes"
+  fi
+
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+
+  # Save session summary to file for future reference
+  local summary_file="$CORTEX_DIR/summaries/sessions/${SESSION_ID}.md"
+  mkdir -p "$CORTEX_DIR/summaries/sessions"
+
+  cat > "$summary_file" << SUMMEOF
+# Session Summary
+
+**Session ID:** $SESSION_ID
+**Started:** $START_TS
+**Duration:** ${duration_min} minutes
+
+## What Was Accomplished
+
+${commits_made:-No commits made}
+
+## Files Changed
+
+${files_changed:-No files changed}
+
+## Notes
+
+${notes_taken:-No notes taken}
+
+SUMMEOF
+
+  _cortex_log info "Session summary saved to .cortex/summaries/sessions/${SESSION_ID}.md"
+}
 
 # ─── Session Tracking ────────────────────────────────────────────────
 
@@ -163,6 +307,11 @@ cleanup() {
         echo "   • View snapshots: cortex-snapshot.sh list"
       fi
     fi
+  fi
+
+  # Generate AI session summary (B2.1) if enrichment enabled
+  if [[ "${CORTEX_ENRICH:-0}" == "1" ]]; then
+    generate_session_summary
   fi
 
   _cortex_log info "Session ended. Context saved."

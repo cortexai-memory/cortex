@@ -177,6 +177,8 @@ if [[ "$SHELL_RC" == *.fish ]]; then
       echo ''
       echo '# Cortex — persistent memory for AI coding'
       echo "alias cx=\"$CORTEX_HOME/bin/cortex-session.sh\""
+      echo "alias cx-commit=\"$CORTEX_HOME/bin/cx-commit.sh\""
+      echo "alias cx-note=\"$CORTEX_HOME/bin/cx-note.sh\""
       echo "set -gx CORTEX_ENRICH 0"
     } >> "$SHELL_RC"
     ALIAS_INSTALLED=1
@@ -188,6 +190,8 @@ else
       echo ''
       echo '# Cortex — persistent memory for AI coding'
       echo "alias cx=\"\$HOME/.cortex/bin/cortex-session.sh\""
+      echo "alias cx-commit=\"\$HOME/.cortex/bin/cx-commit.sh\""
+      echo "alias cx-note=\"\$HOME/.cortex/bin/cx-note.sh\""
       echo "export CORTEX_ENRICH=0  # Set to 1 to enable LLM enrichment"
     } >> "$SHELL_RC"
     ALIAS_INSTALLED=1
