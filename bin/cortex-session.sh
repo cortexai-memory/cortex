@@ -140,10 +140,35 @@ cleanup() {
     disown 2>/dev/null || true
   fi
 
+  # Check for uncommitted work and create snapshot
+  if _cortex_is_git_repo "$PROJECT_DIR"; then
+    cd "$PROJECT_DIR"
+    local uncommitted
+    uncommitted=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+
+    if [[ "$uncommitted" -gt 0 ]]; then
+      echo ""
+      _cortex_log warn "You have $uncommitted uncommitted file(s)"
+
+      # Auto-capture snapshot
+      if command -v cortex-snapshot.sh >/dev/null 2>&1 || [[ -f "$SCRIPT_DIR/cortex-snapshot.sh" ]]; then
+        _cortex_log info "Saving session snapshot..."
+        "$SCRIPT_DIR/cortex-snapshot.sh" capture "$SESSION_ID" 2>/dev/null || \
+          "$CORTEX_HOME/bin/cortex-snapshot.sh" capture "$SESSION_ID" 2>/dev/null || true
+
+        echo ""
+        echo "💡 Your work is saved in a snapshot"
+        echo "   • Continue next session: Just run 'cx' again"
+        echo "   • Commit changes: git add . && git commit -m \"...\""
+        echo "   • View snapshots: cortex-snapshot.sh list"
+      fi
+    fi
+  fi
+
   _cortex_log info "Session ended. Context saved."
   return $exit_code
 }
-trap cleanup EXIT
+trap cleanup EXIT INT TERM
 
 # ─── Launch Claude Code ──────────────────────────────────────────────
 

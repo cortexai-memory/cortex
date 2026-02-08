@@ -140,6 +140,10 @@ llm_model=qwen2.5-coder:7b
 # Daemon intervals (in seconds)
 # daemon_compact_interval=86400   # 24 hours
 # daemon_doctor_interval=604800   # 7 days
+
+# Session Memory (v1.7.0+)
+# snapshot_on_exit=true             # Auto-save on cx exit (default: true)
+# snapshot_retention_days=7         # Keep snapshots for N days (default: 7)
 CFG
   echo "✓ Config created"
 else

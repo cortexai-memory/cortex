@@ -5,6 +5,38 @@ All notable changes to Cortex will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-02-08
+
+### Added
+- **Session Memory** - Track context even without commits! 🎉
+  - Auto-snapshots on `cx` exit when uncommitted work exists
+  - New `cortex-snapshot.sh` command for snapshot management
+  - Subcommands: capture, list, show, restore, clear
+  - Snapshots include: git diff, file list, timestamp, metadata
+  - Latest snapshot automatically shown in SESSION_CONTEXT.md
+  - Work-in-progress preserved between sessions
+- Enhanced `cortex-session.sh` with exit hook
+  - Detects uncommitted work on session end
+  - Auto-captures snapshot with helpful reminder
+  - Friendly messages guide next steps
+- Enhanced `cortex-context.sh` with uncommitted work section
+  - Shows previous session's uncommitted work
+  - Displays file count and summary
+  - Actionable next steps (continue, commit, view details)
+- 7 new snapshot tests (67 total tests)
+
+### Changed
+- SESSION_CONTEXT.md now includes "PREVIOUS SESSION" section when snapshots exist
+- Exit messages more informative about uncommitted work
+- Trap signals expanded to INT and TERM for better cleanup
+
+### Benefits
+- ✅ No pressure to commit mid-session
+- ✅ Context preserved even without commits
+- ✅ Easier exploratory coding
+- ✅ Automatic work-in-progress tracking
+- ✅ Solves "I forgot to commit" problem
+
 ## [1.0.0] - 2026-02-08
 
 **🎉 Phase 1 Complete - Intelligence Layer**

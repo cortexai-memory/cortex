@@ -88,6 +88,33 @@ Cortex auto-generates `PROGRESS.md` showing:
 - ⏳ What's next (from PROJECT_STATE.md)
 - 📊 Velocity metrics (commits/day, lines added)
 
+### Session Memory (NEW in v1.7.0)
+
+**Work without committing!** Cortex now remembers your session even if you don't commit:
+
+```bash
+cx
+# Chat for 10 min, make changes
+# Close terminal without committing
+
+# Later...
+cx
+# ✅ Claude sees your previous uncommitted work!
+```
+
+**Snapshot Management:**
+```bash
+cortex-snapshot.sh list         # See all snapshots
+cortex-snapshot.sh show latest  # View details
+cortex-snapshot.sh clear 7      # Remove snapshots older than 7 days
+```
+
+**How it works:**
+- On `cx` exit, Cortex auto-saves uncommitted work
+- Next session shows: "PREVIOUS SESSION (uncommitted work)"
+- You can continue working OR commit
+- No more re-explaining what you did!
+
 ## What Your AI Sees
 
 When you run `cx`, Cortex generates `SESSION_CONTEXT.md`:
