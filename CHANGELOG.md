@@ -5,6 +5,19 @@ All notable changes to Cortex will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-08
+
+### Added
+- **cortex-status command** — User-facing status dashboard showing project memory state
+  - Displays recent commits, memory usage (commits tracked, sessions, storage)
+  - Shows current task from PROJECT_STATE.md or features.json
+  - Health status and last check time
+  - JSON output mode with `--json` flag for programmatic access
+- 5 new test cases for status command (38 total tests)
+
+### Changed
+- Updated README with status command documentation and examples
+
 ## [0.1.1] - 2026-02-07
 
 ### Fixed
