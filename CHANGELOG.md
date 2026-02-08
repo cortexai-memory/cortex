@@ -5,6 +5,27 @@ All notable changes to Cortex will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-02-08
+
+### Added
+- **File watcher** (`cortex-watch.sh`) for real-time file system monitoring
+  - Cross-platform support: fswatch (macOS) and inotifywait (Linux)
+  - Logs create, modify, delete, and move events to `.cortex/events.jsonl`
+  - Smart exclusions for node_modules, .git, build directories, temp files
+  - Daemon mode with PID tracking for background operation
+  - Graceful cleanup on exit
+- **PROGRESS.md auto-generation** showing project velocity
+  - What's been done (last 7 days with commit stats)
+  - What's in progress (feature branches)
+  - What's next (from PROJECT_STATE.md or features.json)
+  - Velocity metrics (commits/day, lines added)
+  - Controlled via `CORTEX_GENERATE_PROGRESS` environment variable
+- 6 new test cases (44 total tests)
+
+### Changed
+- Updated README with file watching and progress tracking documentation
+- Context generator now includes PROGRESS.md generation by default
+
 ## [1.2.0] - 2026-02-08
 
 ### Added
