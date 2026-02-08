@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "cortex-memory": {
+      "command": "uv",
+      "args": ["run", "--directory", "/Users/sudhir/Documents/vibe/cortex", "cortex-memory"]
+    }
+  }
+}

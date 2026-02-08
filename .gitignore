@@ -5,3 +5,13 @@
 .cortex/
 SESSION_CONTEXT.md
 node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.venv/
+.pytest_cache/
+PROGRESS.md
