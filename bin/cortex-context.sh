@@ -130,11 +130,11 @@ LAST_COMMIT="no commits"
 
 if _cortex_is_git_repo "$PROJECT_DIR"; then
   HAS_COMMITS=true
-  cd "$PROJECT_DIR" && git rev-parse HEAD >/dev/null 2>&1 || HAS_COMMITS=false
+  (cd "$PROJECT_DIR" && git rev-parse HEAD >/dev/null 2>&1) || HAS_COMMITS=false
 
   if [[ "$HAS_COMMITS" == "true" ]]; then
     # Branch (handle detached HEAD)
-    BRANCH=$(cd "$PROJECT_DIR" && git branch --show-current 2>/dev/null)
+    BRANCH=$(cd "$PROJECT_DIR" && git branch --show-current 2>/dev/null || echo "")
     if [[ -z "$BRANCH" ]]; then
       local_head=$(cd "$PROJECT_DIR" && git rev-parse --short HEAD 2>/dev/null || echo "unknown")
       BRANCH="DETACHED@$local_head"
@@ -145,7 +145,7 @@ if _cortex_is_git_repo "$PROJECT_DIR"; then
     LAST_COMMIT="no commits yet"
   fi
 
-  UNCOMMITTED=$(cd "$PROJECT_DIR" && git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+  UNCOMMITTED=$(cd "$PROJECT_DIR" && git status --porcelain 2>/dev/null | wc -l | tr -d ' ' || echo "0")
 fi
 
 # ─── Smart Context Prioritization (B2.2) ─────────────────────────────
@@ -224,7 +224,6 @@ if [[ -f "$NOTES_FILE" ]] && [[ -s "$NOTES_FILE" ]]; then
   # Read last 5 notes
   NOTES_LIST=$(tail -5 "$NOTES_FILE" | while IFS= read -r line; do
     if command -v jq >/dev/null 2>&1; then
-      local note
       note=$(echo "$line" | jq -r '.note // ""' 2>/dev/null || echo "")
       if [[ -n "$note" ]]; then
         echo "- $note"

@@ -202,11 +202,17 @@ cmd_restore() {
   fi
 
   local diff_file
-  diff_file=$(jq -r '.diff_file' "$snapshot_file")
+  diff_file=$(jq -r '.diff_file // ""' "$snapshot_file" 2>/dev/null || echo "")
+
+  # Default to snapshot_id.diff if not specified
+  if [[ -z "$diff_file" ]] || [[ "$diff_file" == "null" ]]; then
+    diff_file="${snapshot_id}.diff"
+  fi
 
   if [[ ! -f "$SNAPSHOTS_DIR/$diff_file" ]]; then
-    _cortex_log error "Diff file not found: $diff_file"
-    exit 1
+    echo "No diff file found for snapshot: $snapshot_id"
+    echo "(Empty diff or snapshot metadata incomplete)"
+    return 0
   fi
 
   _cortex_log warn "This will apply the snapshot diff. Current changes may be overwritten."
@@ -329,11 +335,17 @@ cmd_diff() {
   fi
 
   local diff_file
-  diff_file=$(jq -r '.diff_file' "$snapshot_file")
+  diff_file=$(jq -r '.diff_file // ""' "$snapshot_file" 2>/dev/null || echo "")
+
+  # Default to snapshot_id.diff if not specified
+  if [[ -z "$diff_file" ]] || [[ "$diff_file" == "null" ]]; then
+    diff_file="${snapshot_id}.diff"
+  fi
 
   if [[ ! -f "$SNAPSHOTS_DIR/$diff_file" ]]; then
-    _cortex_log error "Diff file not found: $diff_file"
-    exit 1
+    echo "No diff file found for snapshot: $snapshot_id"
+    echo "(Empty diff or snapshot metadata incomplete)"
+    return 0
   fi
 
   # Display diff with color if possible
