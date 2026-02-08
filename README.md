@@ -7,7 +7,7 @@
 Every AI coding tool forgets everything between sessions. Cortex fixes that.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/github/actions/workflow/status/cortex-memory/cortex/test.yml?label=tests)](https://github.com/cortex-memory/cortex/actions)
+[![Tests](https://img.shields.io/github/actions/workflow/status/cortexai-memory/cortex/test.yml?label=tests)](https://github.com/cortexai-memory/cortex/actions)
 [![macOS](https://img.shields.io/badge/macOS-supported-black)](https://www.apple.com/macos/)
 [![Linux](https://img.shields.io/badge/Linux-supported-orange)](https://www.linux.org/)
 
@@ -34,7 +34,7 @@ git commit → hook captures metadata → cx generates context → AI reads it
 ## Install
 
 ```bash
-git clone https://github.com/cortex-memory/cortex.git
+git clone https://github.com/cortexai-memory/cortex.git
 cd cortex && ./install.sh
 source ~/.zshrc
 ```
@@ -42,7 +42,7 @@ source ~/.zshrc
 Or if you prefer one command:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/cortex-memory/cortex/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/cortexai-memory/cortex/main/install.sh | bash
 source ~/.zshrc
 ```
 

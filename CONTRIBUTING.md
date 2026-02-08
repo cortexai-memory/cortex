@@ -5,7 +5,7 @@ Thanks for your interest in contributing to Cortex! Here's how to get started.
 ## Quick Start
 
 ```bash
-git clone https://github.com/cortex-memory/cortex.git
+git clone https://github.com/cortexai-memory/cortex.git
 cd cortex
 ./install.sh
 ```
@@ -67,7 +67,7 @@ refactor: code refactoring
 
 ## Reporting Bugs
 
-Use the [bug report template](https://github.com/cortex-memory/cortex/issues/new?template=bug_report.md) and include:
+Use the [bug report template](https://github.com/cortexai-memory/cortex/issues/new?template=bug_report.md) and include:
 
 - OS and version
 - bash version (`bash --version`)
