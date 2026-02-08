@@ -50,12 +50,27 @@ source ~/.zshrc
 
 ## Usage
 
+### Starting an AI Session
+
 ```bash
 cd your-project
 cx                  # instead of 'claude'
 ```
 
 That's it. First run auto-initializes. Every run after that generates fresh context.
+
+### Checking Status
+
+```bash
+cortex-status.sh    # View project memory status
+```
+
+Shows:
+- Recent commits and activity
+- Memory usage (tracked commits, sessions, storage)
+- Current task (from PROJECT_STATE.md or features.json)
+- Health status
+- JSON output available with `--json` flag
 
 ## What Your AI Sees
 

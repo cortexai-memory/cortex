@@ -441,3 +441,69 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2} ]]
 }
+
+# ═══════════════════════════════════════════════════════════════════════
+# STATUS TESTS (5)
+# ═══════════════════════════════════════════════════════════════════════
+
+@test "status: shows correct project name" {
+  cd "$TEST_REPO"
+  run bash -c "
+    export CORTEX_HOME='$CORTEX_HOME'
+    '$CORTEX_HOME/bin/cortex-status.sh'
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "$(basename "$TEST_REPO")" ]]
+}
+
+@test "status: JSON output flag works" {
+  cd "$TEST_REPO"
+  run bash -c "
+    export CORTEX_HOME='$CORTEX_HOME'
+    '$CORTEX_HOME/bin/cortex-status.sh' --json
+  "
+  [ "$status" -eq 0 ]
+  # Should be valid JSON
+  echo "$output" | jq . >/dev/null
+}
+
+@test "status: shows commit count" {
+  install_test_hook
+  create_test_commits 3
+
+  cd "$TEST_REPO"
+  run bash -c "
+    export CORTEX_HOME='$CORTEX_HOME'
+    '$CORTEX_HOME/bin/cortex-status.sh'
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Commits tracked: 3" ]]
+}
+
+@test "status: shows storage size" {
+  cd "$TEST_REPO"
+  mkdir -p "$TEST_REPO/.cortex"
+
+  run bash -c "
+    export CORTEX_HOME='$CORTEX_HOME'
+    '$CORTEX_HOME/bin/cortex-status.sh'
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Storage:" ]]
+}
+
+@test "status: handles repo with no commits" {
+  local EMPTY_REPO=$(mktemp -d)
+  cd "$EMPTY_REPO" && git init
+  mkdir -p "$EMPTY_REPO/.cortex"
+
+  run bash -c "
+    export CORTEX_HOME='$CORTEX_HOME'
+    cd '$EMPTY_REPO'
+    '$CORTEX_HOME/bin/cortex-status.sh'
+  "
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "no commits" ]]
+
+  rm -rf "$EMPTY_REPO"
+}
