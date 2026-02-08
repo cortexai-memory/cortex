@@ -33,6 +33,11 @@ from cortex_memory.jsonl import (
     read_commits,
     read_sessions,
 )
+from cortex_memory.schemas import create_entry
+from cortex_memory.sqlite_store import KnowledgeStore
+from cortex_memory.graph import FileGraph
+from cortex_memory.impact import ImpactAnalyzer, build_graph_from_commits
+from cortex_memory.patterns import PatternDetector
 
 mcp = FastMCP(
     "cortex-memory",
@@ -697,6 +702,500 @@ def cortex_index(
             f"Failed to index commits: {e}\n\n"
             f"Check that Ollama is running and the nomic-embed-text model is available."
         )
+
+
+@mcp.tool()
+def cortex_remember(
+    category: str,
+    title: str,
+    content: str,
+    project_dir: str | None = None,
+    context: str | None = None,
+    tags: str | None = None,
+    **kwargs,
+) -> str:
+    """Remember a decision, lesson, pattern, or bug fix.
+
+    Stores knowledge in the local knowledge base for future recall.
+
+    Args:
+        category: Type of knowledge (decision, pattern, bug_fix, lesson, note)
+        title: Brief title or summary
+        content: Detailed description
+        project_dir: Project path
+        context: Additional context (optional)
+        tags: Comma-separated tags (optional)
+        **kwargs: Category-specific fields (e.g., root_cause for bug_fix)
+
+    Returns:
+        Confirmation message with entry ID
+    """
+    project = _resolve_project(project_dir)
+    cortex_dir = get_cortex_dir(project)
+    db_path = cortex_dir / "knowledge.db"
+
+    try:
+        # Create entry
+        entry = create_entry(
+            category=category,
+            title=title,
+            content=content,
+            context=context,
+            tags=tags,
+            **kwargs,
+        )
+
+        # Store in database
+        with KnowledgeStore(db_path) as store:
+            entry_id = store.add(entry)
+
+            return (
+                f"## Knowledge Stored\n\n"
+                f"**ID:** {entry_id}\n"
+                f"**Category:** {category}\n"
+                f"**Title:** {title}\n\n"
+                f"✅ Successfully stored in knowledge base"
+            )
+
+    except Exception as e:
+        return f"## Error\n\nFailed to store knowledge: {e}"
+
+
+@mcp.tool()
+def cortex_recall(
+    query: str,
+    project_dir: str | None = None,
+    category: str | None = None,
+    limit: int = 10,
+) -> str:
+    """Recall knowledge from the knowledge base.
+
+    Search for decisions, lessons, patterns, and bug fixes using natural language.
+
+    Args:
+        query: Search query (full-text search)
+        project_dir: Project path
+        category: Filter by category (decision, pattern, bug_fix, lesson, note)
+        limit: Maximum results to return
+
+    Returns:
+        Formatted search results
+    """
+    project = _resolve_project(project_dir)
+    cortex_dir = get_cortex_dir(project)
+    db_path = cortex_dir / "knowledge.db"
+
+    if not db_path.exists():
+        return (
+            "## No Knowledge Base\n\n"
+            "No knowledge has been stored yet. Use `cortex_remember` to start building your knowledge base."
+        )
+
+    try:
+        with KnowledgeStore(db_path) as store:
+            results = store.search(query, category=category, limit=limit)
+
+            if not results:
+                filter_str = f" (category: {category})" if category else ""
+                return f"## No Results\n\nNo knowledge found for '{query}'{filter_str}."
+
+            lines = [
+                f"## Knowledge Recall: '{query}'",
+                f"**Found:** {len(results)} results",
+                "",
+            ]
+
+            for entry in results:
+                # Format entry
+                lines.append(f"### {entry['title']}")
+                lines.append(f"**ID:** {entry['id']} | **Category:** {entry['category']}")
+
+                if entry.get("tags"):
+                    lines.append(f"**Tags:** {entry['tags']}")
+
+                lines.append("")
+                lines.append(entry["content"])
+
+                # Add category-specific fields
+                if entry["category"] == "decision" and entry.get("context"):
+                    lines.append(f"\n**Context:** {entry['context']}")
+                elif entry["category"] == "bug_fix":
+                    if entry.get("root_cause"):
+                        lines.append(f"\n**Root Cause:** {entry['root_cause']}")
+                    if entry.get("prevention"):
+                        lines.append(f"\n**Prevention:** {entry['prevention']}")
+
+                if entry.get("files"):
+                    lines.append(f"\n**Files:** {entry['files']}")
+
+                lines.append(f"\n*Created: {entry['created_at'][:10]}*")
+                lines.append("")
+
+            return "\n".join(lines)
+
+    except Exception as e:
+        return f"## Error\n\nFailed to search knowledge base: {e}"
+
+
+@mcp.tool()
+def cortex_decisions(
+    project_dir: str | None = None,
+    limit: int = 20,
+) -> str:
+    """List all architectural and technical decisions.
+
+    Shows decision records stored in the knowledge base, sorted by recency.
+
+    Args:
+        project_dir: Project path
+        limit: Maximum decisions to show
+
+    Returns:
+        Formatted list of decisions
+    """
+    project = _resolve_project(project_dir)
+    cortex_dir = get_cortex_dir(project)
+    db_path = cortex_dir / "knowledge.db"
+
+    if not db_path.exists():
+        return (
+            "## No Decisions Recorded\n\n"
+            "No decisions have been recorded yet. Use `cortex_remember` with category='decision'."
+        )
+
+    try:
+        with KnowledgeStore(db_path) as store:
+            decisions = store.list_all(category="decision", limit=limit)
+
+            if not decisions:
+                return "## No Decisions\n\nNo decisions recorded yet."
+
+            lines = [
+                "## Architectural & Technical Decisions",
+                f"**Total:** {len(decisions)} decisions",
+                "",
+            ]
+
+            for dec in decisions:
+                lines.append(f"### {dec['title']}")
+                lines.append(f"**ID:** {dec['id']} | *{dec['created_at'][:10]}*")
+
+                if dec.get("tags"):
+                    lines.append(f"**Tags:** {dec['tags']}")
+
+                lines.append("")
+                lines.append(dec["content"])
+
+                if dec.get("context"):
+                    lines.append(f"\n**Context:** {dec['context']}")
+
+                if dec.get("consequences"):
+                    lines.append(f"\n**Consequences:** {dec['consequences']}")
+
+                if dec.get("alternatives"):
+                    lines.append(f"\n**Alternatives Considered:** {dec['alternatives']}")
+
+                if dec.get("files"):
+                    lines.append(f"\n**Related Files:** {dec['files']}")
+
+                lines.append("")
+
+            return "\n".join(lines)
+
+    except Exception as e:
+        return f"## Error\n\nFailed to list decisions: {e}"
+
+
+@mcp.tool()
+def cortex_impact(
+    filepath: str,
+    project_dir: str | None = None,
+    max_depth: int = 3,
+) -> str:
+    """Analyze impact of changing a file.
+
+    Shows what files depend on this file and would be affected by changes.
+    Uses the file relationship graph built from commit history.
+
+    Args:
+        filepath: File to analyze
+        project_dir: Project path
+        max_depth: Maximum depth for transitive dependency analysis
+
+    Returns:
+        Impact analysis with affected files
+    """
+    project = _resolve_project(project_dir)
+    cortex_dir = get_cortex_dir(project)
+    graph_path = cortex_dir / "graph.db"
+
+    # Build graph if needed
+    if not graph_path.exists():
+        # Initialize graph from commits
+        commits_file = cortex_dir / "commits.jsonl"
+        commits = read_commits(commits_file)
+
+        if not commits:
+            return (
+                "## No Data\n\n"
+                "No commits found. The graph needs commit history to analyze impact."
+            )
+
+        with FileGraph(graph_path) as graph:
+            build_graph_from_commits(commits, graph)
+
+    # Analyze impact
+    try:
+        with FileGraph(graph_path) as graph:
+            analyzer = ImpactAnalyzer(graph)
+            analysis = analyzer.analyze_file(filepath, max_depth)
+
+            lines = [
+                f"## Impact Analysis: {filepath}",
+                "",
+                f"**Impact Level:** {analysis['impact_level'].upper()} "
+                f"(score: {analysis['impact_score']})",
+                "",
+                f"**Direct Dependents:** {analysis['direct_dependents']} files",
+                f"**Transitive Dependents:** {analysis['transitive_dependents']} files",
+                f"**Frequently Co-Changed:** {analysis['co_changed_files']} files",
+                "",
+            ]
+
+            # Show affected files
+            if analysis["affected_files"]["direct"]:
+                lines.append("### Direct Dependents (will break immediately)")
+                for f in analysis["affected_files"]["direct"][:10]:
+                    lines.append(f"- `{f}`")
+                if len(analysis["affected_files"]["direct"]) > 10:
+                    lines.append(
+                        f"  ... and {len(analysis['affected_files']['direct']) - 10} more"
+                    )
+                lines.append("")
+
+            if analysis["affected_files"]["transitive"]:
+                lines.append("### Indirect Impact (may break cascading)")
+                for f in analysis["affected_files"]["transitive"][:10]:
+                    lines.append(f"- `{f}`")
+                if len(analysis["affected_files"]["transitive"]) > 10:
+                    lines.append(
+                        f"  ... and {len(analysis['affected_files']['transitive']) - 10} more"
+                    )
+                lines.append("")
+
+            if analysis["affected_files"]["co_changed"]:
+                lines.append("### Frequently Co-Changed (likely related)")
+                for f in analysis["affected_files"]["co_changed"][:5]:
+                    lines.append(f"- `{f}`")
+                lines.append("")
+
+            # Recommendations
+            lines.append("### Recommendations")
+            if analysis["impact_level"] == "high":
+                lines.append("⚠️ **High Impact** - Consider:")
+                lines.append("- Review all dependent files before merging")
+                lines.append("- Add comprehensive tests")
+                lines.append("- Consider feature flags for gradual rollout")
+            elif analysis["impact_level"] == "medium":
+                lines.append("⚡ **Medium Impact** - Consider:")
+                lines.append("- Test affected files")
+                lines.append("- Update dependent code if needed")
+            else:
+                lines.append("✅ **Low Impact** - Safe to modify with normal precautions")
+
+            return "\n".join(lines)
+
+    except Exception as e:
+        return f"## Error\n\nFailed to analyze impact: {e}"
+
+
+@mcp.tool()
+def cortex_related(
+    filepath: str,
+    project_dir: str | None = None,
+    limit: int = 10,
+) -> str:
+    """Find files related to the given file.
+
+    Shows files that:
+    - Import or are imported by this file
+    - Are frequently changed together
+    - Have dependencies on this file
+
+    Args:
+        filepath: File to analyze
+        project_dir: Project path
+        limit: Maximum related files to show
+
+    Returns:
+        List of related files with relationship types
+    """
+    project = _resolve_project(project_dir)
+    cortex_dir = get_cortex_dir(project)
+    graph_path = cortex_dir / "graph.db"
+
+    # Build graph if needed
+    if not graph_path.exists():
+        commits_file = cortex_dir / "commits.jsonl"
+        commits = read_commits(commits_file)
+
+        if not commits:
+            return "## No Data\n\nNo commits found to build relationship graph."
+
+        with FileGraph(graph_path) as graph:
+            build_graph_from_commits(commits, graph)
+
+    try:
+        with FileGraph(graph_path) as graph:
+            related = graph.get_related_files(filepath, limit=limit)
+
+            if not related:
+                return f"## No Related Files\n\nNo relationships found for `{filepath}`."
+
+            lines = [
+                f"## Related Files: {filepath}",
+                f"**Found:** {len(related)} related files",
+                "",
+            ]
+
+            # Group by relationship type
+            by_type: dict[str, list] = {}
+            for r in related:
+                rel_type = r["relationship"]
+                if rel_type not in by_type:
+                    by_type[rel_type] = []
+                by_type[rel_type].append(r)
+
+            # Format by type
+            for rel_type, files in by_type.items():
+                if rel_type == "imports":
+                    lines.append("### Import Relationships")
+                elif rel_type == "co_changes":
+                    lines.append("### Frequently Co-Changed")
+                elif rel_type == "depends_on":
+                    lines.append("### Dependencies")
+                else:
+                    lines.append(f"### {rel_type.title()}")
+
+                for r in files[:5]:
+                    weight = r.get("weight", 1)
+                    lines.append(f"- `{r['path']}` (strength: {weight})")
+
+                if len(files) > 5:
+                    lines.append(f"  ... and {len(files) - 5} more")
+
+                lines.append("")
+
+            return "\n".join(lines)
+
+    except Exception as e:
+        return f"## Error\n\nFailed to find related files: {e}"
+
+
+@mcp.tool()
+def cortex_patterns(
+    project_dir: str | None = None,
+    pattern_type: str | None = None,
+) -> str:
+    """Detect codebase patterns from commit history.
+
+    Identifies:
+    - Hotspots (frequently changed files)
+    - Modules (directory-based groupings)
+    - Isolated files (changed independently)
+    - Feature cycles (development patterns)
+    - Testing patterns
+
+    Args:
+        project_dir: Project path
+        pattern_type: Specific pattern to detect (hotspots, modules, isolated, cycles, all)
+
+    Returns:
+        Detected patterns with statistics
+    """
+    project = _resolve_project(project_dir)
+    cortex_dir = get_cortex_dir(project)
+    commits_file = cortex_dir / "commits.jsonl"
+    graph_path = cortex_dir / "graph.db"
+
+    commits = read_commits(commits_file)
+    if not commits:
+        return "## No Data\n\nNo commits found for pattern detection."
+
+    # Load graph if available
+    graph = None
+    if graph_path.exists():
+        graph = FileGraph(graph_path)
+
+    try:
+        detector = PatternDetector(commits, graph)
+
+        # Detect specific or all patterns
+        if pattern_type == "hotspots":
+            patterns = {"hotspots": detector.detect_hotspots(top_n=15)}
+        elif pattern_type == "modules":
+            patterns = {"modules": detector.detect_modules()}
+        elif pattern_type == "isolated":
+            patterns = {"isolated_files": detector.detect_isolated_files()}
+        elif pattern_type == "cycles":
+            patterns = {"feature_cycles": detector.detect_feature_cycles()}
+        else:
+            patterns = detector.detect_all_patterns()
+
+        # Format output
+        lines = [
+            "## Codebase Patterns",
+            f"**Analysis of:** {len(commits)} commits",
+            "",
+        ]
+
+        # Hotspots
+        if "hotspots" in patterns and patterns["hotspots"]:
+            lines.append("### Hotspots (Most Changed Files)")
+            for hotspot in patterns["hotspots"][:10]:
+                category = hotspot["category"].upper()
+                lines.append(
+                    f"- `{hotspot['file']}` — {hotspot['changes']} changes [{category}]"
+                )
+            lines.append("")
+
+        # Modules
+        if "modules" in patterns and patterns["modules"]:
+            lines.append("### Modules (Active Areas)")
+            for module in patterns["modules"][:8]:
+                lines.append(
+                    f"- **{module['module']}/** — {module['files']} files, "
+                    f"{module['changes']} changes"
+                )
+            lines.append("")
+
+        # Isolated files
+        if "isolated_files" in patterns and patterns["isolated_files"]:
+            lines.append("### Isolated Files (Change Independently)")
+            for isolated in patterns["isolated_files"][:5]:
+                lines.append(
+                    f"- `{isolated['file']}` — {isolated['solo_ratio']*100:.0f}% solo changes"
+                )
+            lines.append("")
+
+        # Feature cycles
+        if "feature_cycles" in patterns and patterns["feature_cycles"]:
+            lines.append("### Recent Feature Cycles")
+            for cycle in patterns["feature_cycles"][-3:]:
+                lines.append(
+                    f"- **{cycle['start_date']} to {cycle['end_date']}** — "
+                    f"{cycle['commits']} commits ({cycle['features']} features, "
+                    f"{cycle['fixes']} fixes, {cycle['refactors']} refactors)"
+                )
+            lines.append("")
+
+        return "\n".join(lines)
+
+    except Exception as e:
+        return f"## Error\n\nFailed to detect patterns: {e}"
+    finally:
+        if graph:
+            graph.close()
 
 
 # --- Resource ---

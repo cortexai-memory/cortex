@@ -66,13 +66,25 @@ ollama pull nomic-embed-text
 # (Creates .mcp.json pointing to cortex-memory server)
 ```
 
-**MCP Tools Available:**
+**MCP Tools Available (9 total):**
+
+**Phase 2 - Context & Search:**
 - `cortex_context` - Live session context (equivalent to SESSION_CONTEXT.md)
 - `cortex_search` - **Semantic search** over commits (natural language queries!)
 - `cortex_diff` - Compare commits with detailed diffs
 - `cortex_index` - Index commits for vector search
 - `cortex_status` - Memory stats and configuration
 - `cortex_file_history` - Git history for specific files
+
+**Phase 3 - Knowledge Base:**
+- `cortex_remember` - Store decisions, lessons, patterns, bug fixes
+- `cortex_recall` - Search knowledge base with full-text search
+- `cortex_decisions` - List all architectural decisions
+
+**Phase 4 - Code Intelligence:**
+- `cortex_impact` - **Impact analysis** - "what breaks if I change this file?"
+- `cortex_related` - Find related files (imports, co-changes)
+- `cortex_patterns` - Detect hotspots, modules, and development cycles
 
 **Example searches:**
 - "authentication bugs" → finds auth-related commits by meaning, not keywords
@@ -81,14 +93,24 @@ ollama pull nomic-embed-text
 
 **Quick Start (MCP Server):**
 ```bash
-# 1. Open Claude Code in your project
-# 2. Use the cortex_index tool to index commits
-cortex_index(project_dir="/path/to/your/project")
-
-# 3. Search semantically
+# PHASE 2: Semantic Search
+cortex_index()  # Index commits for semantic search
 cortex_search(query="authentication bugs")
 cortex_search(query="database migrations", file_type="sql")
-cortex_search(query="recent refactoring", since="2024-01-01")
+
+# PHASE 3: Knowledge Base
+cortex_remember(
+    category="decision",
+    title="Use PostgreSQL",
+    content="Chose PostgreSQL for JSONB support and full-text search"
+)
+cortex_recall(query="database choice")
+cortex_decisions()  # List all decisions
+
+# PHASE 4: Code Intelligence
+cortex_impact(filepath="src/auth/login.py")  # What breaks if I change this?
+cortex_related(filepath="src/auth/login.py")  # Find related files
+cortex_patterns()  # Detect hotspots and patterns
 ```
 
 ## Usage
@@ -228,39 +250,45 @@ Your AI assistant reads this automatically. No copy-pasting. No re-explaining.
 **Two-layer architecture:**
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                      HOW CORTEX WORKS                            │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  LAYER 0 (Bash) — Core Memory                                   │
-│  ─────────────────────────────────                              │
-│  1. GIT HOOK (post-commit)                                      │
-│     Captures commit metadata to .cortex/commits.jsonl           │
-│     Runs in <10ms. Never blocks git.                            │
-│                                                                 │
-│  2. CONTEXT GENERATOR (cortex-context.sh)                       │
-│     Reads git data → writes SESSION_CONTEXT.md                  │
-│     Runs in <100ms. ~500 tokens of context.                     │
-│                                                                 │
-│  3. SESSION MANAGER (cx command)                                │
-│     Generate context → launch Claude → log session              │
-│     Auto-initializes on first run per project.                  │
-│                                                                 │
-│  LAYER 1 (Python MCP) — Intelligence [Optional]                 │
-│  ───────────────────────────────────────────                    │
-│  4. EMBEDDING GENERATOR (cortex-memory)                         │
-│     Reads commits.jsonl → generates 768-dim vectors             │
-│     Uses Ollama (nomic-embed-text) — runs locally               │
-│                                                                 │
-│  5. VECTOR STORE (LanceDB)                                      │
-│     Stores embeddings in .cortex/vectors/                       │
-│     Enables semantic similarity search                          │
-│                                                                 │
-│  6. MCP SERVER (cortex_search, cortex_index, etc.)              │
-│     Exposes tools to Claude Code via MCP protocol               │
-│     Natural language search: "auth bugs" finds relevant commits │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                         HOW CORTEX WORKS                              │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  LAYER 0 (Bash) — Core Memory                                        │
+│  ─────────────────────────────────                                   │
+│  1. GIT HOOK (post-commit)                                           │
+│     Captures commit metadata to .cortex/commits.jsonl                │
+│     Runs in <10ms. Never blocks git.                                 │
+│                                                                      │
+│  2. CONTEXT GENERATOR (cortex-context.sh)                            │
+│     Reads git data → writes SESSION_CONTEXT.md                       │
+│     Runs in <100ms. ~500 tokens of context.                          │
+│                                                                      │
+│  3. SESSION MANAGER (cx command)                                     │
+│     Generate context → launch Claude → log session                   │
+│     Auto-initializes on first run per project.                       │
+│                                                                      │
+│  LAYER 1 (Python MCP) — Intelligence [Optional]                      │
+│  ───────────────────────────────────────────                         │
+│  4. PHASE 2: Semantic Search                                         │
+│     • LanceDB vectors (.cortex/vectors/) — 768-dim embeddings        │
+│     • Ollama (nomic-embed-text) — local, offline                     │
+│     • Tools: cortex_search, cortex_index, cortex_diff                │
+│                                                                      │
+│  5. PHASE 3: Knowledge Base                                          │
+│     • SQLite + FTS5 (.cortex/knowledge.db) — full-text search        │
+│     • Stores: decisions, lessons, patterns, bug fixes                │
+│     • Tools: cortex_remember, cortex_recall, cortex_decisions        │
+│                                                                      │
+│  6. PHASE 4: Code Intelligence                                       │
+│     • SQLite graph (.cortex/graph.db) — file relationships           │
+│     • Tracks: imports, co-changes, dependencies                      │
+│     • Tools: cortex_impact, cortex_related, cortex_patterns          │
+│                                                                      │
+│  7. MCP SERVER                                                       │
+│     Exposes 12 tools to Claude Code via Model Context Protocol       │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Storage
@@ -273,8 +301,12 @@ All data lives in `.cortex/` (auto-added to `.gitignore`):
 ├── sessions.jsonl      # Session start/end timestamps
 ├── summaries/          # Optional LLM-generated summaries
 │   └── latest.md
-└── vectors/            # Vector embeddings (Layer 1 only)
-    └── commits.lance   # LanceDB storage for semantic search
+├── vectors/            # Vector embeddings (Phase 2)
+│   └── commits.lance   # LanceDB storage for semantic search
+├── knowledge.db        # Knowledge base (Phase 3)
+│                      # SQLite + FTS5: decisions, lessons, patterns, bug fixes
+└── graph.db            # File relationship graph (Phase 4)
+                       # SQLite adjacency list: imports, co-changes, dependencies
 ```
 
 ## Configuration
