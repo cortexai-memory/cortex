@@ -1,0 +1,16 @@
+[Unit]
+Description=Cortex Daemon - Persistent memory for AI coding assistants
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=CORTEX_HOME/bin/cortex-daemon.sh start
+ExecStop=CORTEX_HOME/bin/cortex-daemon.sh stop
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:CORTEX_HOME/daemon.log
+StandardError=append:CORTEX_HOME/daemon.log
+Environment="CORTEX_HOME=CORTEX_HOME"
+
+[Install]
+WantedBy=default.target

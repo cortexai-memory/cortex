@@ -134,6 +134,10 @@ llm_model=qwen2.5-coder:7b
 
 # Retention: days to keep commit history (default: 30)
 # retention_days=30
+
+# Daemon intervals (in seconds)
+# daemon_compact_interval=86400   # 24 hours
+# daemon_doctor_interval=604800   # 7 days
 CFG
   echo "✓ Config created"
 else
@@ -211,4 +215,8 @@ echo '  export CORTEX_ENRICH=1'
 echo ''
 echo 'Health check:'
 echo '  ~/.cortex/bin/cortex-doctor.sh'
+echo ''
+echo 'Background daemon (optional):'
+echo '  ~/.cortex/bin/cortex-daemon.sh start   # run periodic maintenance'
+echo '  ~/.cortex/bin/cortex-daemon.sh status  # check status'
 echo ''

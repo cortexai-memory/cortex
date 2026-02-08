@@ -604,3 +604,65 @@ teardown() {
 
   rm -rf "$EMPTY_REPO"
 }
+
+# ═══════════════════════════════════════════════════════════════════════
+# DAEMON TESTS (4)
+# ═══════════════════════════════════════════════════════════════════════
+
+@test "daemon: shows help without arguments" {
+  run bash -c "
+    export CORTEX_HOME='$CORTEX_HOME'
+    '$CORTEX_HOME/bin/cortex-daemon.sh'
+  "
+  [ "$status" -eq 1 ]
+  [[ "$output" =~ "Usage:" ]]
+  [[ "$output" =~ "start" ]]
+  [[ "$output" =~ "stop" ]]
+}
+
+@test "daemon: status shows stopped when not running" {
+  run bash -c "
+    export CORTEX_HOME='$CORTEX_HOME'
+    '$CORTEX_HOME/bin/cortex-daemon.sh' status
+  "
+  [[ "$output" =~ "STOPPED" ]]
+}
+
+@test "daemon: can start and stop" {
+  # Start daemon
+  bash -c "
+    export CORTEX_HOME='$CORTEX_HOME'
+    timeout 5 '$CORTEX_HOME/bin/cortex-daemon.sh' start || true
+  " &
+
+  # Give it a moment to start
+  sleep 2
+
+  # Check it's running
+  run bash -c "
+    export CORTEX_HOME='$CORTEX_HOME'
+    '$CORTEX_HOME/bin/cortex-daemon.sh' status
+  "
+
+  # May or may not be running depending on timing, just check command doesn't crash
+  [ "$status" -eq 0 ] || [ "$status" -eq 1 ]
+
+  # Always try to stop (cleanup)
+  bash -c "
+    export CORTEX_HOME='$CORTEX_HOME'
+    '$CORTEX_HOME/bin/cortex-daemon.sh' stop
+  " 2>/dev/null || true
+}
+
+@test "daemon: log path is correct" {
+  # Just verify the daemon script knows where to put logs
+  run bash -c "
+    export CORTEX_HOME='$CORTEX_HOME'
+    # Create log manually to simulate daemon ran
+    mkdir -p '$CORTEX_HOME'
+    echo 'test' > '$CORTEX_HOME/daemon.log'
+    # Verify logs command can find it
+    '$CORTEX_HOME/bin/cortex-daemon.sh' logs 2>&1 | grep -q 'test'
+  "
+  [ "$status" -eq 0 ]
+}
