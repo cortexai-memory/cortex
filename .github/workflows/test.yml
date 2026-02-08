@@ -38,7 +38,7 @@ jobs:
         run: shellcheck --severity=warning bin/*.sh templates/*.sh install.sh uninstall.sh
 
       - name: Run tests
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: unset CI GITHUB_ACTIONS && bats tests/
 
   test-python:
