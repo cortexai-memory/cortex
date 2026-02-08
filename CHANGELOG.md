@@ -5,6 +5,93 @@ All notable changes to Cortex will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-02-08
+
+**🎉 Phase 1 Complete - Intelligence Layer**
+
+This major release completes Phase 1 of the Cortex implementation plan, transforming Cortex from a simple context generator into an intelligent, automated memory system for AI coding assistants.
+
+### Highlights
+
+- **User-Facing Commands**: `cortex-status` for project dashboards
+- **Intelligence Layer**: Enhanced LLM prompts (commit/session/decisions), ADR extraction
+- **Automation**: File watcher, PROGRESS.md auto-generation, background daemon
+- **Developer Experience**: Tab completion for bash/zsh
+- **Quality**: 60 comprehensive tests (48 unit + 12 integration), all passing
+
+### All Phase 1 Features (v0.1.0 → v1.6.0)
+
+**v0.1.0** - Foundation
+- Post-commit git hook with metadata capture
+- SESSION_CONTEXT.md generator
+- Session manager (`cx` command)
+- Optional LLM enrichment (Ollama, OpenRouter, Gemini)
+- Storage compaction
+- Health diagnostics (`cortex-doctor`)
+- One-command installer
+- 33 tests
+
+**v1.1.0** - Status Dashboard
+- `cortex-status` command with project metrics
+- JSON output mode
+- 38 tests
+
+**v1.2.0** - Enhanced Intelligence
+- Specialized prompt templates (commit/session/decisions)
+- Architectural Decision Records (ADR) extraction
+- Structured output directories
+- Multi-prompt support
+- 38 tests
+
+**v1.3.0** - Automation
+- File watcher (`cortex-watch`) with fswatch/inotifywait
+- PROGRESS.md auto-generation
+- Velocity metrics (commits/day, lines added)
+- Event logging
+- 44 tests
+
+**v1.4.0** - Background Daemon
+- `cortex-daemon` with start/stop/status/restart/logs
+- Automated periodic compaction (24h)
+- Automated health checks (7d)
+- Log rotation (10MB)
+- Platform integration (launchd/systemd templates)
+- 48 tests
+
+**v1.5.0** - Developer Experience
+- Bash completion
+- Zsh completion with descriptions
+- Auto-installed and sourced
+- 48 tests
+
+**v1.6.0** - Test Coverage
+- Comprehensive integration test suite
+- 60 total tests (48 unit + 12 integration)
+- Full pipeline coverage
+- Cross-platform compatibility tests
+
+### Breaking Changes
+
+None. All changes are backward compatible with v0.1.0.
+
+### Upgrade Path
+
+From any v0.x or v1.x release:
+```bash
+cd cortex && git pull && ./install.sh
+source ~/.zshrc
+```
+
+### What's Next (Phase 2)
+
+- Plugin architecture
+- Cursor/Aider/Continue.dev adapters
+- VS Code extension
+- Cross-project memory
+- Web dashboard
+
+---
+
 ## [1.6.0] - 2026-02-08
 
 ### Added
