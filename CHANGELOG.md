@@ -5,6 +5,24 @@ All notable changes to Cortex will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-02-08
+
+### Added
+- **Background daemon** (`cortex-daemon.sh`) for automated maintenance
+  - Commands: start, stop, status, restart, logs
+  - Automated periodic compaction (default: every 24 hours)
+  - Automated health checks (default: every 7 days)
+  - Log rotation at 10MB threshold
+  - Configurable intervals via `daemon_compact_interval` and `daemon_doctor_interval`
+- Platform integration templates
+  - macOS: launchd plist for `~/Library/LaunchAgents/`
+  - Linux: systemd service for `~/.config/systemd/user/`
+- 4 new test cases (48 total tests)
+
+### Changed
+- Updated installer with daemon usage instructions
+- Config template includes daemon interval settings
+
 ## [1.3.0] - 2026-02-08
 
 ### Added
