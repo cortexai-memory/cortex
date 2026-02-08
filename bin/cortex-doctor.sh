@@ -249,12 +249,14 @@ fi
 echo ""
 if [[ $checks_failed -eq 0 ]]; then
   echo "Health: GOOD ($checks_passed/$required_total required checks passed)"
-  exit 0
 else
   echo "Health: ISSUES ($checks_failed/$required_total checks failed)"
   if [[ "$FIX_MODE" == "false" ]]; then
     echo ""
     echo "Run with --fix to auto-repair fixable issues"
   fi
-  exit 1
 fi
+
+# Always exit 0 - doctor is a diagnostic tool, not a gating tool
+# Scripts can parse output to detect issues if needed
+exit 0

@@ -87,11 +87,11 @@ fi
 
 if _cortex_is_git_repo "$PROJECT_DIR" && cd "$PROJECT_DIR" && git rev-parse HEAD >/dev/null 2>&1; then
   if [[ -n "${LAST_END:-}" ]]; then
-    SINCE_LAST=$(cd "$PROJECT_DIR" && git log --oneline --since="$LAST_END" 2>/dev/null | head -10)
+    SINCE_LAST=$(cd "$PROJECT_DIR" && git log --oneline --since="$LAST_END" 2>/dev/null | head -10 || echo "")
   fi
   # Fallback: show last 5 commits
   if [[ -z "${SINCE_LAST:-}" ]]; then
-    SINCE_LAST=$(cd "$PROJECT_DIR" && git log --oneline -5 2>/dev/null)
+    SINCE_LAST=$(cd "$PROJECT_DIR" && git log --oneline -5 2>/dev/null || echo "")
   fi
 fi
 [[ -z "${SINCE_LAST:-}" ]] && SINCE_LAST="No commits found."
@@ -109,7 +109,7 @@ fi
 
 # Fallback to raw git log
 if [[ -z "${RECENT:-}" ]] && _cortex_is_git_repo "$PROJECT_DIR" && cd "$PROJECT_DIR" && git rev-parse HEAD >/dev/null 2>&1; then
-  RECENT=$(cd "$PROJECT_DIR" && git log --oneline --since='24 hours ago' 2>/dev/null | head -10)
+  RECENT=$(cd "$PROJECT_DIR" && git log --oneline --since='24 hours ago' 2>/dev/null | head -10 || echo "")
 fi
 [[ -z "${RECENT:-}" ]] && RECENT="No commits in last 24 hours."
 
@@ -145,7 +145,7 @@ if _cortex_is_git_repo "$PROJECT_DIR"; then
     LAST_COMMIT="no commits yet"
   fi
 
-  UNCOMMITTED=$(cd "$PROJECT_DIR" && git status --porcelain 2>/dev/null | wc -l | tr -d ' ' || echo "0")
+  UNCOMMITTED=$(cd "$PROJECT_DIR" && git status --porcelain 2>/dev/null | wc -l | tr -d ' \n' || echo "0")
 fi
 
 # ─── Smart Context Prioritization (B2.2) ─────────────────────────────
