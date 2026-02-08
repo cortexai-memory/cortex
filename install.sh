@@ -124,6 +124,10 @@ llm_provider=none
 # Model to use (provider-specific)
 llm_model=qwen2.5-coder:7b
 
+# Which prompts to use for enrichment (comma-separated)
+# Options: commit, session, decisions
+# enrichment_prompts=commit,decisions
+
 # API keys (uncomment and fill in if using cloud providers)
 # openrouter_key=sk-or-...
 # gemini_key=AI...

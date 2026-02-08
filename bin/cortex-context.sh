@@ -145,12 +145,26 @@ fi
 # ─── LLM Enrichment (optional) ───────────────────────────────────────
 
 ENRICHMENT=""
+DECISIONS=""
+
+# Include commit summaries
 if [[ -f "$CORTEX_DIR/summaries/latest.md" ]]; then
-  SUMMARY_CONTENT=$(tail -10 "$CORTEX_DIR/summaries/latest.md" 2>/dev/null || true)
+  SUMMARY_CONTENT=$(tail -20 "$CORTEX_DIR/summaries/latest.md" 2>/dev/null || true)
   if [[ -n "$SUMMARY_CONTENT" ]]; then
     ENRICHMENT="
 ## AI SUMMARY (auto-generated, verify accuracy)
 $SUMMARY_CONTENT"
+  fi
+fi
+
+# Include architectural decisions (if any exist from today)
+TODAY=$(date +%F)
+if [[ -f "$CORTEX_DIR/decisions/$TODAY.md" ]]; then
+  DECISIONS_CONTENT=$(cat "$CORTEX_DIR/decisions/$TODAY.md" 2>/dev/null || true)
+  if [[ -n "$DECISIONS_CONTENT" ]]; then
+    DECISIONS="
+## ARCHITECTURAL DECISIONS (today)
+$DECISIONS_CONTENT"
   fi
 fi
 
@@ -175,7 +189,7 @@ Last: $LAST_COMMIT
 
 ## WARNINGS
 $(printf '%b' "$WARNINGS")
-${ENRICHMENT}
+${ENRICHMENT}${DECISIONS}
 CTXEOF
 
 mv "$OUTPUT_TMP" "$OUTPUT"
