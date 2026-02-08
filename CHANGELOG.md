@@ -5,6 +5,19 @@ All notable changes to Cortex will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-02-08
+
+### Added
+- **Tab completion** for bash and zsh
+  - `completions/cortex.bash` — Bash completion with command/flag awareness
+  - `completions/cortex.zsh` — Zsh completion with descriptions
+  - Completions for: cortex-daemon.sh, cortex-status.sh, cortex-watch.sh, cortex-doctor.sh
+  - Auto-installed and sourced by installer
+
+### Changed
+- Installer now detects shell type and adds appropriate completion file
+- Shell RC files updated with completion sourcing
+
 ## [1.4.0] - 2026-02-08
 
 ### Added
