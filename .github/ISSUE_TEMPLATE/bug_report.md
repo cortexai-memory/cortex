@@ -1,34 +1,38 @@
 ---
 name: Bug Report
-about: Report a bug in Cortex
-title: "[Bug] "
+about: Report a bug or unexpected behavior
+title: '[BUG] '
 labels: bug
+assignees: ''
 ---
 
-## Environment
-- OS: <!-- e.g., macOS 15.2, Ubuntu 24.04 -->
-- bash version: <!-- bash --version -->
-- git version: <!-- git --version -->
-- jq version: <!-- jq --version -->
+## Description
+<!-- A clear and concise description of the bug -->
 
-## Describe the bug
-<!-- A clear description of what happened -->
+## To Reproduce
+Steps to reproduce the behavior:
+1. Run command '...'
+2. See error '...'
 
-## Steps to reproduce
-1.
-2.
-3.
+## Expected Behavior
+<!-- What you expected to happen -->
 
-## Expected behavior
-<!-- What should have happened -->
-
-## Actual behavior
+## Actual Behavior
 <!-- What actually happened -->
 
-## Doctor output
+## Environment
+- OS: [e.g., macOS 14.2, Ubuntu 22.04]
+- Shell: [e.g., zsh, bash]
+- Cortex Version: [run `grep CORTEX_VERSION ~/.cortex/bin/_cortex-utils.sh`]
+- Git Version: [run `git --version`]
+- jq Version: [run `jq --version`]
+
+## Logs
+<!-- Include relevant output from SESSION_CONTEXT.md, error messages, or logs -->
+
 ```
-<!-- Paste output of: ~/.cortex/bin/cortex-doctor.sh -->
+Paste logs here
 ```
 
-## Additional context
-<!-- Any other relevant info, logs, or screenshots -->
+## Additional Context
+<!-- Any other context about the problem -->

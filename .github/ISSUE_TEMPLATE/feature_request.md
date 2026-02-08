@@ -1,18 +1,25 @@
 ---
 name: Feature Request
-about: Suggest a new feature for Cortex
-title: "[Feature] "
+about: Suggest an enhancement or new feature
+title: '[FEATURE] '
 labels: enhancement
+assignees: ''
 ---
 
-## Problem
-<!-- What problem does this solve? -->
+## Feature Description
+<!-- Clear description of the feature you'd like -->
+
+## Use Case
+<!-- Why is this feature needed? What problem does it solve? -->
 
 ## Proposed Solution
-<!-- How should it work? -->
+<!-- How would you implement this? -->
 
 ## Alternatives Considered
-<!-- Any other approaches you thought about -->
+<!-- Other approaches you've thought about -->
 
 ## Additional Context
-<!-- Screenshots, examples, related issues -->
+<!-- Screenshots, examples, or other relevant information -->
+
+## Would you like to contribute this feature?
+<!-- Yes / No / Maybe with guidance -->
