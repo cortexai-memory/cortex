@@ -19,20 +19,101 @@ Every AI coding tool forgets everything between sessions. Cortex fixes that.
 
 ## The Problem
 
-Every AI coding assistant — Claude Code, Cursor, Copilot, Aider — starts each session with **zero memory** of what happened before. You waste 10-15 minutes re-explaining your project, your conventions, and where you left off. Every. Single. Session.
+Every AI coding assistant — Claude Code, Cursor, Copilot, Aider — starts each session with **zero memory** of what happened before.
+
+**You waste 10-15 minutes every session:**
+- "What was I working on?"
+- "Why did I make that architectural decision?"
+- "Which files did I change yesterday?"
+
+**This costs you ~5 hours per week.**
+
+<!-- TODO: Add GIF showing developer frustration re-explaining context -->
+<!-- ![Before Cortex](docs/gifs/before-cortex.gif) -->
 
 ## The Fix
 
-Cortex watches your git commits and auto-generates a `SESSION_CONTEXT.md` that your AI reads at session start. It knows what you did yesterday, what broke, and what's next.
+Cortex gives your AI **permanent memory**. One command, zero configuration.
 
-```
-git commit → hook captures metadata → cx generates context → AI reads it
+```bash
+curl -fsSL https://raw.githubusercontent.com/cortexai-memory/cortex/main/install.sh | bash
+cd your-project && cx  # That's it. AI now remembers everything.
 ```
 
-**Layer 0 (bash):** No daemons. No databases. No LLMs required. Just bash + git + jq.
-**Layer 1 (Python MCP):** Semantic search over commits using local embeddings. Claude Code integration.
+<!-- TODO: Add GIF showing instant context awareness -->
+<!-- ![After Cortex](docs/gifs/after-cortex.gif) -->
+
+**How it works:**
+```
+git commit → Cortex captures metadata → AI reads context → Zero re-explaining
+```
+
+**Two layers:**
+- **Layer 0 (bash):** Core memory. No dependencies. Works in 30 seconds.
+- **Layer 1 (Python MCP):** AI superpowers. Semantic search. Impact analysis. Knowledge base.
+
+## Quick Start
+
+### I want memory NOW (30 seconds)
+
+```bash
+# One command
+curl -fsSL https://raw.githubusercontent.com/cortexai-memory/cortex/main/install.sh | bash
+source ~/.zshrc  # or ~/.bashrc
+
+# Use it
+cd your-project
+cx  # Instead of 'claude' - now with memory
+```
+
+**Done.** Claude now sees your recent commits, active files, and session history.
+
+**[See detailed quickstart →](QUICKSTART.md)**
+
+### I want AI superpowers (5 minutes)
+
+Semantic search, knowledge base, impact analysis:
+
+```bash
+# Automated setup (installs Ollama, models, everything)
+cd cortex
+./setup-mcp.sh  # Takes 5 minutes, fully automated
+
+# Test it
+cx
+# You: "Find authentication bugs"
+# Claude: [Semantic search finds relevant commits]
+# You: "What breaks if I change auth/login.py?"
+# Claude: [Shows full dependency tree]
+```
+
+**[See examples →](EXAMPLES.md)**
+
+## Why Cortex?
+
+| Without Cortex | With Cortex |
+|----------------|-------------|
+| 😤 Re-explain project every session (10 min) | 😊 AI knows everything (0 sec) |
+| 🔍 `git grep` through 200 commits (10+ min) | ⚡ Natural language search (10 sec) |
+| 🤷 "Why did we choose MongoDB?" → Unknown | 💡 Instant recall of all decisions |
+| 😱 Change file → hope nothing breaks (30+ min) | 🎯 Full dependency tree (5 sec) |
+| **~5 hours wasted per week** | **~5 minutes wasted per week** |
+
+**Time saved: 260 hours/year = 6.5 weeks of productivity**
+
+<!-- TODO: Add comparison GIF side-by-side -->
+<!-- ![Before vs After](docs/gifs/comparison.gif) -->
 
 ## Install
+
+### Option 1: Fast Install (Recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/cortexai-memory/cortex/main/install.sh | bash
+source ~/.zshrc  # or ~/.bashrc
+```
+
+### Option 2: Manual Clone
 
 ```bash
 git clone https://github.com/cortexai-memory/cortex.git
@@ -40,30 +121,38 @@ cd cortex && ./install.sh
 source ~/.zshrc
 ```
 
-Or if you prefer one command:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/cortexai-memory/cortex/main/install.sh | bash
-source ~/.zshrc
-```
-
 **Requirements:** git, jq (both pre-installed on macOS)
 
 ### MCP Server (Optional - for Claude Code)
 
-Cortex includes a Model Context Protocol (MCP) server for Claude Code with semantic search:
+**One command, fully automated setup:**
 
 ```bash
-# Install Python dependencies
 cd cortex
-uv sync
+./setup-mcp.sh  # Installs Ollama, models, Python, everything (5 minutes)
+```
 
-# Install Ollama and embedding model
-brew install ollama
+**That's it.** The script automatically:
+- ✅ Installs Ollama (if not installed)
+- ✅ Starts Ollama service
+- ✅ Pulls nomic-embed-text model (274 MB)
+- ✅ Installs uv + Python dependencies
+- ✅ Registers MCP server with Claude Code
+- ✅ Tests everything works
+
+**Manual setup** (if you prefer):
+
+```bash
+# 1. Install dependencies
+brew install ollama  # macOS
+cd cortex && uv sync
+
+# 2. Pull model
+ollama serve &
 ollama pull nomic-embed-text
 
-# Register MCP server with Claude Code
-# (Creates .mcp.json pointing to cortex-memory server)
+# 3. Register with Claude Code (auto-created by setup-mcp.sh)
+# .mcp.json file will be in cortex directory
 ```
 
 **MCP Tools Available (9 total):**
