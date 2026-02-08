@@ -18,6 +18,13 @@ source "$SCRIPT_DIR/_cortex-utils.sh" 2>/dev/null || \
 # ─── Setup ────────────────────────────────────────────────────────────
 
 PROJECT_DIR="$(_cortex_project_root "${1:-}")"
+
+# Validate git repository (allow non-git for basic context)
+if ! _cortex_is_git_repo "$PROJECT_DIR"; then
+  _cortex_log warn "not a git repo - Limited context available"
+  # Create basic context anyway for non-git projects
+fi
+
 CORTEX_DIR="$PROJECT_DIR/.cortex"
 OUTPUT="$PROJECT_DIR/SESSION_CONTEXT.md"
 OUTPUT_TMP="$OUTPUT.tmp.$$"
@@ -290,6 +297,12 @@ mv "$OUTPUT_TMP" "$OUTPUT"
 # Report
 WORD_COUNT=$(wc -w < "$OUTPUT" | tr -d ' ')
 _cortex_log info "Session #$SESSION_NUM context ready ($WORD_COUNT words)"
+
+# Output key context info for debugging/testing
+[[ "$RECENT" == "No commits in last 24 hours." ]] && echo "[Context] No commits in last 24 hours" >&2
+[[ "$TASK" == *"No task tracker"* ]] && echo "[Context] No task tracker found" >&2
+[[ "$BRANCH" == DETACHED@* ]] && echo "[Context] DETACHED HEAD at ${BRANCH#DETACHED@}" >&2
+[[ -n "$WARNINGS" ]] && [[ "$WARNINGS" != "None." ]] && echo "[Context] Warnings: $(echo "$WARNINGS" | tr '\n' ' ')" >&2
 
 # ─── Generate PROGRESS.md (optional) ──────────────────────────────────
 

@@ -270,8 +270,9 @@ cmd_clear() {
 cmd_undo() {
   # Remove the latest snapshot
   if [[ ! -L "$SNAPSHOTS_DIR/latest.snapshot" ]]; then
-    _cortex_log error "No latest snapshot to undo"
-    exit 1
+    echo "No latest snapshot to undo"
+    _cortex_log info "No snapshots found"
+    return 0
   fi
 
   local target

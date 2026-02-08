@@ -17,11 +17,19 @@ source "$SCRIPT_DIR/_cortex-utils.sh" 2>/dev/null || \
 # ─── Setup ────────────────────────────────────────────────────────────
 
 PROJECT_DIR="$(_cortex_project_root "${1:-}")"
-CONTEXT_FILE="$PROJECT_DIR/SESSION_CONTEXT.md"
 
 echo "🔍 Cortex Context Preview"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
+
+# Validate project directory
+if ! _cortex_is_git_repo "$PROJECT_DIR"; then
+  echo "❌ Not in a git repository"
+  echo "Cortex requires a git repository to generate context."
+  exit 1
+fi
+
+CONTEXT_FILE="$PROJECT_DIR/SESSION_CONTEXT.md"
 
 # ─── Generate Context ─────────────────────────────────────────────────
 

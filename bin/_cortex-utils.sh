@@ -171,7 +171,16 @@ _cortex_project_root() {
 # Check if we're inside a git repository
 _cortex_is_git_repo() {
   local dir="${1:-.}"
-  (cd "$dir" && git rev-parse --is-inside-work-tree >/dev/null 2>&1)
+  # Check if inside work tree (excludes bare repos)
+  if (cd "$dir" && git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
+    return 0
+  fi
+  # Also check for bare repository
+  if (cd "$dir" && git rev-parse --is-bare-repository 2>/dev/null | grep -q "true"); then
+    _cortex_log warn "Bare repository detected. Cortex requires a working tree."
+    return 1
+  fi
+  return 1
 }
 
 # ─── UUID Generation ─────────────────────────────────────────────────

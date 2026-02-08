@@ -27,9 +27,11 @@ mkdir -p "$CORTEX_DIR"
 cmd_add() {
   local note_text="$*"
 
-  if [[ -z "$note_text" ]]; then
+  # Validate note is not empty or whitespace-only
+  if [[ -z "$note_text" ]] || [[ -z "${note_text// /}" ]]; then
     echo "Usage: cx-note add <note text>"
     echo "Example: cx-note add 'Remember to test the auth flow'"
+    echo "Error: Note cannot be empty"
     exit 1
   fi
 
