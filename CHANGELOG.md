@@ -5,6 +5,26 @@ All notable changes to Cortex will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-02-08
+
+### Added
+- **Enhanced LLM summarization** with specialized prompt templates
+  - `summarize-commit.txt` — Structured commit summaries focusing on What/Why/Impact
+  - `summarize-session.txt` — End-of-session synthesis across multiple commits
+  - `extract-decisions.txt` — Architectural Decision Records (ADRs)
+- Structured output directories for different summary types
+  - `.cortex/summaries/commits/` — Per-commit summaries
+  - `.cortex/summaries/sessions/` — Session-level summaries
+  - `.cortex/decisions/` — Extracted architectural decisions
+- Multi-prompt support in `cortex-enrich.sh`
+- Architectural decisions included in SESSION_CONTEXT.md
+- New `enrichment_prompts` config option (commit, session, decisions)
+
+### Changed
+- Enhanced prompt quality with examples and detailed guidelines
+- Increased timeout for LLM calls from 15s to 30s
+- Installer config template updated with enrichment options
+
 ## [1.1.0] - 2026-02-08
 
 ### Added
